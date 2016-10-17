@@ -90,3 +90,4 @@ ENV/
 
 # project specific
 catalogue.csv
+salesforce.properties
