@@ -22,23 +22,12 @@ from utils import CsvDictsAdapter
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 debug_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-error_formatter = logging.Formatter('%(message)s')
 
-fh_debug = logging.FileHandler('../logs/debug.log')
-fh_debug.setLevel(logging.DEBUG)
-fh_debug.setFormatter(debug_formatter)
+ch_debug = logging.StreamHandler()
+ch_debug.setLevel(logging.DEBUG)
+ch_debug.setFormatter(debug_formatter)
 
-fh_error = logging.FileHandler('../logs/error.log')
-fh_error.setLevel(logging.ERROR)
-fh_error.setFormatter(error_formatter)
-
-ch_error = logging.StreamHandler()
-ch_error.setLevel(logging.ERROR)
-ch_error.setFormatter(error_formatter)
-
-logger.addHandler(fh_debug)
-logger.addHandler(fh_error)
-logger.addHandler(ch_error)
+logger.addHandler(ch_debug)
 
 # CONFIGURATION
 
@@ -71,8 +60,8 @@ rate_plan_charge_tpl = {
     "zqu__DeferredRevenueAccount__c": u"Produits constat\u00e9s d'avance Abonnement",
     "zqu__Model__c": "Flat Fee Pricing",
     "zqu__RecognizedRevenueAccount__c": "Prestation de services Abonnement",
-    "zqu__RevRecCode2__c": "Default",
-    "zqu__RevRecTriggerCondition__c": "Contract Effective Date",
+    # "zqu__RevRecCode2__c": "Default",
+    # "zqu__RevRecTriggerCondition__c": "Contract Effective Date",
     "zqu__RevenueRecognitionRuleName__c": "Recognize daily over time",
     "zqu__TaxCode2__c": "Presse",
     "zqu__Taxable__c": "true",
@@ -122,7 +111,7 @@ rate_plans = []
 rate_plan_charges = []
 rate_plan_charge_tiers = []
 
-for product in products[:1]:
+for product in products:
     product_rate_plans_yearly = []
     product_rate_plans_monthly = []
     product_rate_plan_charges_yearly = []
@@ -245,7 +234,7 @@ session_id, instance = SalesforceLogin(
     username=sf_properties['sf.username'],
     password=sf_properties['sf.password'][:-len(sf_properties['sf.token'])],
     security_token=sf_properties['sf.token'],
-    sandbox=True
+    sandbox=False
 )
 
 
