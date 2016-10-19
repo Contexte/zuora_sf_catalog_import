@@ -70,6 +70,8 @@ rate_plan_charge_tpl = {
     "zqu__Type__c": "Recurring"
 }
 
+MAX_RATE_PLANS_PER_PRODUCT = 200
+
 
 WRITE = True
 
@@ -105,25 +107,34 @@ products = [
 ]
 
 products = [dict(product.items() + product_tpl.items()) for product in products]
+splitted_products = []
 
 
 rate_plans = []
 rate_plan_charges = []
 rate_plan_charge_tiers = []
 
-for product in products:
+for original_product in products:
     product_rate_plans_yearly = []
     product_rate_plans_monthly = []
     product_rate_plan_charges_yearly = []
     product_rate_plan_charges_monthly = []
     product_rate_plan_charge_tiers_yearly = []
     product_rate_plan_charge_tiers_monthly = []
+    rate_plan_in_current_batch = None
+    rate_plan_batch = 0
     with open('../catalogue.csv') as catalog:
         reader = csv.reader(catalog, delimiter=",")
         for code, org_type, \
             employees_min, employees_max, \
             reader_min, reader_max, \
             price_year, price_month in reader:
+
+            if rate_plan_in_current_batch is None or rate_plan_in_current_batch >= MAX_RATE_PLANS_PER_PRODUCT:
+                rate_plan_in_current_batch = 0
+                product = copy(original_product)
+                product["ImportExternalId__c"] += original_product["ImportExternalId__c"] + str(rate_plan_batch)
+                splitted_products.append(product)
 
             ############
             # Rate plans
@@ -143,8 +154,9 @@ for product in products:
             }
 
             rate_plan_yearly = copy(rate_plan)
-            rate_plan_yearly["ImportExternalId__c"] = '{}-{}-y'.format(
+            rate_plan_yearly["ImportExternalId__c"] = '{}{}-{}-y'.format(
                 product['ProductCode'],
+                rate_plan_batch,
                 code.lower()
             )
 
@@ -154,8 +166,9 @@ for product in products:
             product_rate_plans_yearly.append(rate_plan_yearly)
 
             rate_plan_monthly = copy(rate_plan)
-            rate_plan_monthly["ImportExternalId__c"] = '{}-{}-m'.format(
+            rate_plan_monthly["ImportExternalId__c"] = '{}{}-{}-m'.format(
                 product['ProductCode'],
+                rate_plan_batch,
                 code.lower()
             )
             rate_plan_monthly['Name'] = "{} Mensuel".format(code)
@@ -216,6 +229,9 @@ for product in products:
             }
             product_rate_plan_charge_tiers_monthly.append(rate_plan_charge_tier_monthly)
 
+            rate_plan_in_current_batch += 2
+            rate_plan_batch += 1
+
     rate_plans.append(product_rate_plans_yearly)
     rate_plans.append(product_rate_plans_monthly)
 
@@ -234,7 +250,7 @@ session_id, instance = SalesforceLogin(
     username=sf_properties['sf.username'],
     password=sf_properties['sf.password'][:-len(sf_properties['sf.token'])],
     security_token=sf_properties['sf.token'],
-    sandbox=False
+    sandbox=True
 )
 
 
@@ -245,7 +261,7 @@ if WRITE:
 
     job = bulk.create_insert_job("Product2", contentType='JSON')
 
-    batch = bulk.post_bulk_batch(job, json.dumps(products), contentType='application/json')
+    batch = bulk.post_bulk_batch(job, json.dumps(splitted_products), contentType='application/json')
 
     bulk.close_job(job)
 
