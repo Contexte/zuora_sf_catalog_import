@@ -36,7 +36,7 @@ sf_properties.load(open('../salesforce.properties'))
 
 product_tpl = {
     "FamilyZuora__c": "Abonnement",
-    "zqu__Allow_Feature_Changes__c": "false",
+    "zqu__Allow_Feature_Changes__c": "true",
     "zqu__Category__c": "Base Products",
     "zqu__EffectiveEndDate__c": "2021-12-31",
     "zqu__EffectiveStartDate__c": "2016-09-01",
